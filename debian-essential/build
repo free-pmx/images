@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+DIR="${BASH_SOURCE[0]%/*}" && source "$DIR/../util" || exit 255
+
+DESCRIPTION="Essential Debian system"
+AUTHORS="free-pmx"
+
+ROOTFS="$(rootfs_debstrap)"
+rootfs_epoch
+CONTAINER=$(buildah from scratch)
+buildah add "$CONTAINER" "$ROOTFS" /
+buildah_config_worker
+buildah_finish
+out_debstrap

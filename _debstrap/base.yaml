@@ -1,0 +1,18 @@
+mmdebstrap:
+  aptopts:
+    - Acquire::By-Hash=yes
+    - Acquire::Check-Valid-Until=false
+    - Acquire::Retries=3
+    - Acquire::PDiffs=false
+    - Acquire::Languages=none
+  dpkgopts:
+    - path-exclude=/usr/share/locale/*
+    - path-exclude=/usr/share/info/*
+    - path-exclude=/usr/share/doc/*
+    - path-exclude=/usr/share/man/*
+  customize-hooks:
+    - ln -fs /usr/share/zoneinfo/Etc/UTC "$1/etc/localtime"
+    - echo "worker:x:1001:1001::/nonexistent:/usr/sbin/nologin" >> "$1/etc/passwd"
+    - echo "worker:x:1001:" >> "$1/etc/group"
+  cleanup-hooks:
+    - rm -f "$1/etc/hostname" "$1/etc/hosts" "$1/etc/resolv.conf"

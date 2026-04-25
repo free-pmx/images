@@ -1,0 +1,6 @@
+mmdebstrap:
+  variant: minbase
+  packages:
+    - dpkg-dev
+    - lintian
+    - diffoscope-minimal

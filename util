@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -e
+trap 'echo >&2 E$? L$LINENO ${BASH_SOURCE[0]}' ERR
+
+DSDIR="${BASH_SOURCE[0]%/*}/_debstrap"
+
+rootfs_debstrap() {
+    : "${NAME:?} ${DIR:?} ${OUTDIR:?}"
+
+    declare rootfs
+    rootfs="$(mktemp -d --tmpdir "${NAME}.debstrap-rootfs.XXXXXX")"
+    chmod 755 "$rootfs"
+
+    declare snap="$DSDIR/snapshot.yaml"
+    declare base="$DSDIR/base.yaml"
+    declare cust="$DIR/debstrap.yaml"
+    declare out="$OUTDIR/bdebstrap"
+
+    test -f "$snap"
+    test -f "$base"
+    test -f "$cust"
+
+    mkdir -p "$out"
+
+    bdebstrap --output "$out" \
+        --name "$NAME" \
+        --mode unshare \
+        --target "$rootfs" \
+        --config "$snap" \
+        --config "$base" \
+        --config "$cust"   
+
+    printf '%s\n' "$rootfs"
+}
+
+rootfs_epoch() {
+    : "${ROOTFS:?} ${SOURCE_DATE_EPOCH:?}"
+
+    find "$ROOTFS" -xdev -exec \
+        touch --no-dereference --date "@$SOURCE_DATE_EPOCH" {} +
+}
+
+buildah_config_worker() {
+    : "${CONTAINER:?}"
+    buildah config \
+        --env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+        --env LC_ALL=C.UTF-8 \
+        --env LANG=C.UTF-8 \
+        --user worker:worker \
+        "$CONTAINER"
+}
+
+buildah_finish() {
+    : "${CONTAINER:?} ${NAME:?} ${AUTHORS:?} ${DESCRIPTION:?} ${SOURCE:?} ${REVISION:?}"
+
+    buildah config \
+        --annotation "org.opencontainers.image.authors=$AUTHORS" \
+        --annotation "org.opencontainers.image.description=$DESCRIPTION" \
+        --annotation "org.opencontainers.image.source=$SOURCE" \
+        --annotation "org.opencontainers.image.revision=$REVISION" \
+        "$CONTAINER"
+
+    buildah commit "$CONTAINER" "$NAME"
+}
+
+out_debstrap() {
+    : "${OUTDIR:?}"
+
+    config="$OUTDIR/bdebstrap/config.yaml"
+    debstrap="$OUTDIR/debstrap.json"
+
+    test -f "$config"
+    test ! -f "$debstrap"
+
+    json=$(yq eval -o=json '.' "$config")
+
+    jq \
+    '{
+        mirrors: (.mmdebstrap.mirrors // []),
+        suite: .mmdebstrap.suite,
+        variant: .mmdebstrap.variant,
+        packages: (.mmdebstrap.packages // [])
+    }' <<< "$json" > "$debstrap"
+}

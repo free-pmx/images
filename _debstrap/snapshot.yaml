@@ -1,4 +1,0 @@
-mmdebstrap:
-  mirrors:
-    - https://snapshot.debian.org/archive/debian/20250920T144436Z/
-  suite: bookworm

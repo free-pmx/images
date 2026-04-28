@@ -11,12 +11,10 @@ rootfs_debstrap() {
     rootfs="$(mktemp -d --tmpdir "${NAME}.debstrap-rootfs.XXXXXX")"
     chmod 755 "$rootfs"
 
-    declare snap="$DSDIR/snapshot.yaml"
     declare base="$DSDIR/base.yaml"
     declare cust="$DIR/debstrap.yaml"
     declare out="$OUTDIR/bdebstrap"
 
-    test -f "$snap"
     test -f "$base"
     test -f "$cust"
 
@@ -26,7 +24,6 @@ rootfs_debstrap() {
         --name "$NAME" \
         --mode unshare \
         --target "$rootfs" \
-        --config "$snap" \
         --config "$base" \
         --config "$cust"   
 

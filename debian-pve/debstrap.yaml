@@ -1,0 +1,10 @@
+mmdebstrap:
+  mirrors:
+    - https://snapshot.debian.org/archive/debian/20260428T144241Z/
+  suite: trixie
+  variant: minbase
+  packages:
+    - git
+    - make
+    - debhelper
+    - lintian

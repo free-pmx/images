@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+DIR="${BASH_SOURCE[0]%/*}" && source "$DIR/../util" || exit 255
+
+DESCRIPTION="Custom Debian system for PVE package rebuilds"
+AUTHORS="free-pmx"
+
+ROOTFS="$(rootfs_debstrap)"
+CONTAINER=$(buildah from scratch)
+buildah add "$CONTAINER" "$ROOTFS" /
+
+ROOTFS=$(buildah mount $CONTAINER)
+
+wget https://enterprise.proxmox.com/debian/proxmox-release-trixie.gpg \
+    -O "$ROOTFS/etc/apt/keyrings/proxmox-release-trixie.gpg"
+
+cp "$DIR/pve-build.sources" "$ROOTFS/etc/apt/sources.list.d/"
+
+rootfs_epoch
+buildah unmount $CONTAINER
+
+buildah_config_worker
+buildah_finish
+out_debstrap
